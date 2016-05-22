@@ -60,15 +60,19 @@ You should see a result something like this:
 ```
 
 ## Say hello
-fd-engine       `curl -u demo:123 http://docker-ip:8080/info`
+fd-engine
+`curl -u demo:123 http://docker-ip:8080/info`
 
 Search and store have unsecured endpoints. fd-engine talks to them
 
-fd-search       `curl http://docker-ip:8081/api/ping`
+fd-search
+`curl http://docker-ip:8081/api/ping`
 
-fd-store        `curl http://docker-ip:8082/api/ping`
+fd-store
+`curl http://docker-ip:8082/api/ping`
 
-Riak            `curl http://docker-ip:8082/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
+Riak
+`curl http://docker-ip:8082/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
 
 ## Tracking data in to the service
 
@@ -78,15 +82,24 @@ Example commands that track data in to the sevice can be found [here](https://gi
 
 fd-view         coming soon
 
-RabbitMQ        `http://docker-ip:15672` (HTML queue admin)
+RabbitMQ - queue administration
+`http://docker-ip:15672`
 
-[ElasticSearch](https://www.elastic.co)   `curl http://docker-ip:9200` (REST API)
+[ElasticSearch](https://www.elastic.co) - Rest API
 
-neo4j-browser   http://docker-ip:7474  (HTML browser and REST access to Neo4j)
+`curl http://docker-ip:9200`
 
-[Kibana](https://www.elastic.co/products/kibana)          http://docker-ip:5601 (ElasticSearch data viz)
+[neo4j-browser](http://neo4j.org) -HTML browser and REST access to Neo4j
 
-Spring Eureaka  http://docker-ip:8888
+`http://docker-ip:7474`
+
+[Kibana](https://www.elastic.co/products/kibana) (ElasticSearch data viz)
+
+`http://docker-ip:5601`
+
+Spring/Netflix Eureaka
+
+`http://docker-ip:8888`
 
 FlockData's API documentation is managed in postman, a google chrome app. Modify the environment settings, in Postman, to point to your `docker-ip` as appropriate.
 
