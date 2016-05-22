@@ -44,8 +44,8 @@ See who you are
 Check that inter-service connectivity is esablished
 `curl -u demo:123 http://docker-ip:8080/api/v1/admin/health`
 
-You should see a result something like this:
-```{
+```
+{
   "eureka.client.serviceUrl.defaultZone" : "http://eureka:8761/eureka/",
   "fd-search" : "Ok on http://fd-search:8081",
   "fd-store" : "Ok on http://fd-store:8082",
@@ -60,6 +60,7 @@ You should see a result something like this:
 ```
 
 ## Say hello
+
 fd-engine
 `curl -u demo:123 http://docker-ip:8080/info`
 
