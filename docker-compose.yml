@@ -51,9 +51,19 @@ services:
       - elasticsearch
       - fd-search
 
+  fd-client:
+    container_name: fd-client
+    image: flockdata/fd-client:latest
+    # docker-compose run fd-client fdregister -u=demo:123 -l=demo
+    # docker-compose run fd-client fdcountries -u=demo:123
+    environment:
+      org.fd.engine.api: 'http://fd-engine:8080'
+      org.fd.client.batchsize: 1
+      rabbit.host: rabbit
+
   fd-engine:
     container_name: fd-engine
-    image: flockdata/fd-engine:0.98.1a
+    image: flockdata/fd-engine:0.98.2-SNAPSHOT
 
     ports:
       - '8080:8080'
@@ -88,6 +98,8 @@ services:
       org.fd.store.api: http://fd-store:8082
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
+      org.fd.engine.fortress.store: 'true'
+      cors.allowOrigin:  http://docker-ip,http://192.168.99.100,http://127.0.0.1:9000,http://localhost:9000,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
 
     depends_on:
       - rabbit
@@ -102,7 +114,7 @@ services:
 
   fd-search:
     container_name: fd-search
-    image: flockdata/fd-search:0.98.1a
+    image: flockdata/fd-search:0.98.2-SNAPSHOT
     ports:
      - '8081:8081'
     expose:
@@ -147,7 +159,7 @@ services:
 
   fd-store:
     container_name: fd-store
-    image: flockdata/fd-store:0.98.1a
+    image: flockdata/fd-store:0.98.2-SNAPSHOT
     ports:
      - '8082:8082'
 
@@ -170,6 +182,16 @@ services:
 
       riak.hosts: riak
       es.clustername: 'es_flockdata'
+
+  fd-view:
+      container_name: fd-view
+      image: flockdata/fd-view:latest
+      ports:
+        - '80:80'
+      depends_on:
+        - fd-engine
+
+      #ToDo: Figure out how to pass the URL to find fd-engine for the user
 
 # Monitoring tools
   eureka:

@@ -32,13 +32,10 @@ With the volumes created, start up the services. Give things about 30 seconds to
 
 `docker-compose up -d`
 
-FlockData has a configurable security meachaism backed by the Spring Security framework. We love [StormPath](http://stormpath.com); you might too.
-This stack uses simple security credentials that are managed in the `docker-compose.yml` file. Namely a single set of credentials - `demo` / `123`
-
 # Testing the install
 This stack runs in the docker-machine. If you're not running on native linux, then you will need to replace `docker-ip` with your docker-machine IP address. You might want to create a `hosts` file entry.
 
-See who you are
+Check your credentials with the `demo` account
 `curl -u demo:123 http://docker-ip:8080/api/account`
 
 Check that inter-service connectivity is esablished
@@ -75,33 +72,56 @@ fd-store
 Riak
 `curl http://docker-ip:8082/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
 
+## Security
+
+FlockData uses configurable [security mechanisms](https://github.com/monowai/flockdata.org/tree/master/fd-security) backed by the Spring Security framework. We love [StormPath](http://stormpath.com); you might too.
+This stack uses simple security credentials that are managed in the `docker-compose.yml` file. Namely a single set of credentials - `demo` / `123`
+
+FlockData currently has two access roles:
+
+|Role|Purpose|
+|---|---|
+|FD_ADMIN|Allows performing administrative functions and creating data access users|
+|FD_USER|Allows user accounts access to the service. Should be registered to connect to a SystemUser account that authorises reading and writing of data|
+
+Authorised users are accounts that exist in your security domain. Authorised users need to have a FlockData SystemUser identity established. 
+
+Security roles are defined in your authorisation sub-system - LDAP/AD/StormPath etc. They are not stored in FlockData (except in the case of using the simpleauth security mechanism).    
+
+SystemUser identify
+    Authenticated accounts need to be connected to a system user account to read and write data. This is done via the RegistrationEP or using the flockdata/fd-client docker image
+
+## Registering a SystemUser account
+This example logs in as an FD_ADMIN account - `demo` - and creates a SystemUser identify for the login identifier `demo` i.e. it connects the auth account to a SystemUser data access account. You can do this in one of the two following ways:
+
+Using the pre-configured fd-client container in the docker-compose stack
+`docker-compose run fd-client fdregister -u=demo:123 -l=demo `
+
+Running a stand-alone docker image and telling it where to find `fd-engine`
+`docker run flockdata/fd-client fdregister -u=demo:123 -l=demo --org.fd.engine.url=http://fd-engine:8080`
+
+
+With a data access account established, you can load some static data into the service. FlockData comes with a data set of countries and capitals. Load this data via the following command    
+
+`docker-compose run fd-client fdcountries -u=demo:123`
+
+You can now navigate to the [Neo4j browser](http://docker-ip:7474) and after logging in with default password of `neo4j` you can run the following Cypher
+`match (c:Country) return c` 
+
 ## Tracking data in to the service
 
-Example commands that track data in to the sevice can be found [here](https://github.com/monowai/flockdata.org/tree/master/fd-engine#interacting-with-flockdata)
+Other commands that track data in to the service can be found [here](https://github.com/monowai/flockdata.org/tree/master/fd-engine#interacting-with-flockdata)
 
 ## User Interfaces
 
-fd-view         coming soon
+|Service   |Description   |Address   |
+|---|---|---|
+|fd-view |FlockData's integrated browser and analysis tool   |[http://docker-ip](http://docker-ip)|
+|[weavescope](https://www.weave.works/products/weave-scope/)|visual overview of the stack   |[http://docker-ip:4040](http://docker-ip:4040)|
+|RabbitMQ |messaging admin|[http://docker-ip:15672](http://docker-ip:15672)|
+|[ElasticSearch](https://www.elastic.co)|Rest based search API |[http://docker-ip:9200](http://docker-ip:9200)|
+[neo4j-browser](http://neo4j.org)|HTML graph browser and REST access to Neo4j|[http://docker-ip:7474](http://docker-ip:7474)|
+[Kibana](https://www.elastic.co/products/kibana)|ElasticSearch data viz|[http://docker-ip:5601](http://docker-ip:5601)|
+|Spring/Netflix Eureaka|Monitoring|[http://docker-ip:8761](http://docker-ip:8761)|
+|[PostMan](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)|Documentation for the REST API|[Postman](https://github.com/monowai/flockdata.org/blob/master/fd.api-postman.json)|
 
-RabbitMQ - queue administration
-`http://docker-ip:15672`
-
-[ElasticSearch](https://www.elastic.co) - Rest API
-
-`curl http://docker-ip:9200`
-
-[neo4j-browser](http://neo4j.org) -HTML browser and REST access to Neo4j
-
-`http://docker-ip:7474`
-
-[Kibana](https://www.elastic.co/products/kibana) (ElasticSearch data viz)
-
-`http://docker-ip:5601`
-
-Spring/Netflix Eureaka
-
-`http://docker-ip:8888`
-
-FlockData's API documentation is managed in postman, a google chrome app. Modify the environment settings, in Postman, to point to your `docker-ip` as appropriate.
-
-[Postman](https://github.com/monowai/flockdata.org/blob/master/fd.api-postman.json)
