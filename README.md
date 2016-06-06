@@ -38,7 +38,10 @@ This stack runs in the docker-machine. If you're not running on native linux, th
 Check your credentials with the `demo` account
 `curl -u demo:123 http://docker-ip:8080/api/account`
 
-Check that inter-service connectivity is esablished
+Check that inter-service connectivity is established
+`docker-compose run fd-client fdhealth -u=demo:123 -s="http://fd-engine:8080"`
+
+OR
 `curl -u demo:123 http://docker-ip:8080/api/v1/admin/health`
 
 ```
@@ -59,11 +62,15 @@ Check that inter-service connectivity is esablished
 ## Say hello
 
 fd-engine
+`docker-compose run fd-client fdping -s="http://fd-engine:8080"`
+or
 `curl -u demo:123 http://docker-ip:8080/info`
 
 Search and store have unsecured endpoints. fd-engine talks to them
 
 fd-search
+`docker-compose run fd-client fdping -s="http://fd-engine:8081"`
+or
 `curl http://docker-ip:8081/api/ping`
 
 fd-store
@@ -95,7 +102,7 @@ SystemUser identify
 This example logs in as an FD_ADMIN account - `demo` - and creates a SystemUser identify for the login identifier `demo` i.e. it connects the auth account to a SystemUser data access account. You can do this in one of the two following ways:
 
 Using the pre-configured fd-client container in the docker-compose stack
-`docker-compose run fd-client fdregister -u=demo:123 -l=demo `
+`docker-compose run fd-client fdregister -u=demo:123 -l=demo -c=chelmer`
 
 Running a stand-alone docker image and telling it where to find `fd-engine`
 `docker run flockdata/fd-client fdregister -u=demo:123 -l=demo --org.fd.engine.url=http://fd-engine:8080`
