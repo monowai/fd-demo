@@ -42,7 +42,7 @@ services:
 
   kibana:
     container_name: kibana
-    image: kibana:4.1.6
+    image: kibana:4.1
     ports:
       - 5601:5601
     environment:
@@ -60,6 +60,14 @@ services:
       org.fd.engine.api: 'http://fd-engine:8080'
       org.fd.client.batchsize: 1
       rabbit.host: rabbit
+
+#  fd-wrapport:
+#    container_name: fd-wrapport
+#    image: flockdata/fd-wrapport:latest
+#    environment:
+#      org.fd.engine.api: 'http://fd-engine:8080'
+#      org.fd.client.batchsize: 1
+#      rabbit.host: rabbit
 
   fd-engine:
     container_name: fd-engine
@@ -99,7 +107,7 @@ services:
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
       org.fd.engine.fortress.store: 'true'
-      cors.allowOrigin:  http://docker-ip,http://192.168.99.100,http://127.0.0.1:9000,http://localhost:9000,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
+      cors.allowOrigin:  http://docker-ip,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
 
     depends_on:
       - rabbit
@@ -190,13 +198,13 @@ services:
         - '80:80'
       depends_on:
         - fd-engine
-
-      #ToDo: Figure out how to pass the URL to find fd-engine for the user
+      environment:
+        ENGINE_URL: 'http://fd-engine:8080'
 
 # Monitoring tools
   eureka:
     container_name: fd-discovery
-    image: flockdata/fd-discovery:0.98.1a
+    image: flockdata/fd-discovery:0.98.2-SNAPSHOT
     ports:
       - '8761:8761'
 
