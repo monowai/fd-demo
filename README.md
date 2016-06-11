@@ -102,7 +102,7 @@ SystemUser identify
 This example logs in as an FD_ADMIN account - `demo` - and creates a SystemUser identify for the login identifier `demo` i.e. it connects the auth account to a SystemUser data access account. You can do this in one of the two following ways:
 
 Using the pre-configured fd-client container in the docker-compose stack
-`docker-compose run fd-client fdregister -u=demo:123 -l=demo -c=chelmer`
+`docker-compose run fd-client fdregister -u=demo:123 -l=demo -c=flockdata`
 
 Running a stand-alone docker image and telling it where to find `fd-engine`
 `docker run flockdata/fd-client fdregister -u=demo:123 -l=demo --org.fd.engine.url=http://fd-engine:8080`
