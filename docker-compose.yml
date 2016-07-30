@@ -2,17 +2,17 @@ version: '2'
 services:
 
   rabbit:
-    container_name: rabbit
+    container_name: fdemo-rabbit
     image: rabbitmq:3-management
     ports:
       - '5672:5672'
       - '15672:15672'
     expose:
-      - 8080
+      - 15682
       - 5672
 
   kibana:
-    container_name: kibana
+    container_name: fdemo-kibana
     image: kibana:4.6
     ports:
       - 5601:5601
@@ -23,18 +23,18 @@ services:
     links:
       - elasticsearch
 
-  grafana:
-    container_name: grafana
-    image: grafana/grafana
-    ports:
-       - 3000:3000
-    depends_on:
-      - elasticsearch
-    links:
-      - elasticsearch
+#  grafana:
+#    container_name: grafana
+#    image: grafana/grafana
+#    ports:
+#       - 3000:3000
+#    depends_on:
+#      - elasticsearch
+#    links:
+#      - elasticsearch
 
   elasticsearch:
-    container_name: elasticsearch
+    container_name: fdemo-elasticsearch
     image: elasticsearch:2.4
     command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
     ports:
@@ -45,28 +45,28 @@ services:
     expose:
       - 9200
       - 9300
-
-
   fd-client:
-    container_name: fd-client
-    image: flockdata/fd-client:latest
+    container_name: fdemo-client
+    image: flockdata/fd-client
     # docker-compose run fd-client fdregister -u=demo:123 -l=demo
     # docker-compose run fd-client fdcountries -u=demo:123
     environment:
-      org.fd.engine.api: 'http://fd-engine:8080'
+      org.fd.engine.api: 'http://fd-engine:8091'
       org.fd.client.batchsize: 1
+      org.fd.client.http.user: demo
+      org.fd.client.http.pass: 123
       spring.rabbitmq.host: rabbit
 
   fd-engine:
-    container_name: fd-engine
-    image: flockdata/fd-engine:0.98.2-SNAPSHOT
+    container_name: fdemo-engine
+    image: flockdata/fd-engine:0.98.4
 
     ports:
-      - '8080:8080'
+      - '8091:8091'
       - '7474:7474'
       - '61000:61000'
     expose:
-      - 8080
+      - 8091
       - 7474
       - 61000
 
@@ -84,11 +84,9 @@ services:
     environment:
 #      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
       _JAVA_OPTIONS: "-Xmx2g"
-      server.port: 8080
+      server.port: 8091
       spring.profiles.active: fd-server,fd-auth-test,discovery
 
-      eureka.client.enabled: 'true'
-      spring.cloud.discovery.enabled: 'true'
       org.fd.discovery.url: http://eureka:8761/eureka/
 
       org.fd.auth.simple.users.demo.pass: 123
@@ -96,8 +94,8 @@ services:
 
       spring.rabbitmq.host: rabbit
       spring.rabbitmq.port: 5672
-      org.fd.search.api: http://fd-search:8081
-      org.fd.store.api: http://fd-store:8082
+      org.fd.search.api: http://fd-search:8092
+      org.fd.store.api: http://fd-store:8093
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
       org.fd.engine.fortress.store: 'true'
@@ -108,12 +106,12 @@ services:
       - eureka
 
   fd-search:
-    container_name: fd-search
-    image: flockdata/fd-search:0.98.2-SNAPSHOT
+    container_name: fdemo-search
+    image: flockdata/fd-search:0.98.4
     ports:
-     - '8081:8081'
+     - '8092:8092'
     expose:
-      - 8081
+      - 8092
 
     depends_on:
       - elasticsearch
@@ -130,17 +128,15 @@ services:
         hard: 40000
 
     environment:
-      server.port: 8081
+      server.port: 8092
       spring.profiles.active: fd-server,fd-no-auth,discovery
       _JAVA_OPTIONS: "-Xmx2g"
 
-      eureka.client.enabled: 'true'
-      spring.cloud.discovery.enabled: 'true'
       org.fd.discovery.url: http://eureka:8761/eureka/
 
       spring.rabbitmq.host: rabbit
 
-      org.fd.engine.url: 'http://fd-engine:8080'
+      org.fd.engine.url: 'http://fd-engine:8091'
       #Is the node going to be a client node which means it will hold no data
       org.fd.search.es.transportOnly: "true"
       # A local node is a node that uses a local (JVM level) discovery and transport
@@ -152,13 +148,13 @@ services:
       es.path.data: /opt/flockdata/data
 
   fd-store:
-    container_name: fd-store
-    image: flockdata/fd-store:0.98.2-SNAPSHOT
+    container_name: fdemo-store
+    image: flockdata/fd-store:0.98.4
     ports:
-     - '8082:8082'
+     - '8093:8093'
 
     expose:
-      - 8082
+      - 8093
 
     depends_on:
       - rabbit
@@ -167,28 +163,27 @@ services:
 
     environment:
       _JAVA_OPTIONS: "-Xmx1g"
-      spring.profiles.active: fd-no-auth,discovery,riak
-      server.port: 8082
+      spring.profiles.active: fd-server,fd-no-auth,discovery,riak
+      server.port: 8093
       spring.rabbitmq.host: rabbit
-      eureka.client.enabled: 'true'
-      spring.cloud.discovery.enabled: 'true'
+
       org.fd.discovery.url: http://eureka:8761/eureka/
       riak.hosts: riak
       es.clustername: 'es_flockdata'
 
   fd-view:
-      container_name: fd-view
-      image: flockdata/fd-view:latest
+      container_name: fdemo-view
+      image: flockdata/fd-view
       ports:
         - '80:80'
 
       environment:
-        ENGINE_URL: 'http://fd-engine:8080'
+        ENGINE_URL: 'http://fd-engine:8091'
 
 # Monitoring tools
   eureka:
-    container_name: fd-discovery
-    image: flockdata/fd-discovery:0.98.2-SNAPSHOT
+    container_name: fdemo-discovery
+    image: flockdata/fd-discovery:0.98.2
     ports:
       - '8761:8761'
     expose:
@@ -203,8 +198,8 @@ services:
   #    - '8888:8888'
 
   scope:
-    image: weaveworks/scope:latest
-    container_name: weave-scope
+    image: weaveworks/scope
+    container_name: fdemo-weavescope
     volumes:
       - '/var/run/:/var/run:rw'
     command:
@@ -217,7 +212,7 @@ services:
     privileged: true
 
   riak:
-    container_name: riak
+    container_name: fdemo-riak
     image: lapax/riak:latest
     ports:
       - '8087:8087'
@@ -244,5 +239,5 @@ volumes:
   fd-riak:
     external: true
 
-# Cleaningup unused docker stuff
+# Cleaning up unused docker stuff
 #    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
