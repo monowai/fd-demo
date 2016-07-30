@@ -1,10 +1,5 @@
 version: '2'
 services:
-#  proxy:
-#    container_name: nginx
-#    image: nginx:mainline-alpine
-#    ports:
-#        - "80:80"
 
   rabbit:
     container_name: rabbit
@@ -61,14 +56,6 @@ services:
       org.fd.client.batchsize: 1
       rabbit.host: rabbit
 
-#  fd-wrapport:
-#    container_name: fd-wrapport
-#    image: flockdata/fd-wrapport:latest
-#    environment:
-#      org.fd.engine.api: 'http://fd-engine:8080'
-#      org.fd.client.batchsize: 1
-#      rabbit.host: rabbit
-
   fd-engine:
     container_name: fd-engine
     image: flockdata/fd-engine:0.98.2-SNAPSHOT
@@ -88,8 +75,11 @@ services:
         soft: 40000
         hard: 40000
 
+    depends_on:
+      - rabbit
+
     environment:
-      JAVA_OPTS: "-Xmx2g"
+      _JAVA_OPTS: "-Xmx2g"
       server.port: 8080
       spring.profiles.active: fd-server,fd-auth-test,discovery
 
@@ -109,14 +99,7 @@ services:
       org.fd.engine.fortress.store: 'true'
       cors.allowOrigin:  http://docker-ip,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
 
-    depends_on:
-      - rabbit
-      - eureka
-      - fd-search
-      - fd-store
-
     links:
-      - fd-search
       - rabbit
       - eureka
 
@@ -129,9 +112,9 @@ services:
       - 8081
 
     depends_on:
+      - elasticsearch
       - rabbit
       - eureka
-      - elasticsearch
 
     links:
       - rabbit
@@ -145,7 +128,7 @@ services:
     environment:
       server.port: 8081
       spring.profiles.active: fd-server,fd-no-auth,discovery
-      JAVA_OPTS: "-Xmx2g"
+      _JAVA_OPTS: "-Xmx2g"
 
       eureka.client.enabled: 'true'
       spring.cloud.discovery.enabled: 'true'
@@ -178,8 +161,9 @@ services:
       - rabbit
       - eureka
       - riak
+
     environment:
-      JAVA_OPTS: "-Xmx1g"
+      _JAVA_OPTS: "-Xmx1g"
       spring.profiles.active: fd-no-auth,discovery,riak
       server.port: 8082
       rabbit.host: rabbit
@@ -187,7 +171,6 @@ services:
       eureka.client.enabled: 'true'
       spring.cloud.discovery.enabled: 'true'
       org.fd.discovery.url: http://eureka:8761/eureka/
-
       riak.hosts: riak
       es.clustername: 'es_flockdata'
 
@@ -196,8 +179,7 @@ services:
       image: flockdata/fd-view:latest
       ports:
         - '80:80'
-      depends_on:
-        - fd-engine
+
       environment:
         ENGINE_URL: 'http://fd-engine:8080'
 
@@ -207,9 +189,10 @@ services:
     image: flockdata/fd-discovery:0.98.2-SNAPSHOT
     ports:
       - '8761:8761'
-
+    expose:
+      - 8761
     environment:
-      eureka.server.enable-self-preservation: 'false'
+      eureka.server.enable-self-preservation: 'true'
 
   #config:
   #  container_name: fd-config
