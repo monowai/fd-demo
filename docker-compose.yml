@@ -13,7 +13,7 @@ services:
 
   kibana:
     container_name: kibana
-    image: kibana:4.5
+    image: kibana:4.6
     ports:
       - 5601:5601
     environment:
@@ -23,9 +23,19 @@ services:
     links:
       - elasticsearch
 
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+       - 3000:3000
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
+
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:2.3
+    image: elasticsearch:2.4
     command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
     ports:
       - '9200:9200'
@@ -45,7 +55,7 @@ services:
     environment:
       org.fd.engine.api: 'http://fd-engine:8080'
       org.fd.client.batchsize: 1
-      rabbit.host: rabbit
+      spring.rabbitmq.host: rabbit
 
   fd-engine:
     container_name: fd-engine
@@ -84,8 +94,8 @@ services:
       org.fd.auth.simple.users.demo.pass: 123
       org.fd.auth.simple.users.demo.roles: FD_USER;FD_ADMIN
 
-      rabbit.host: rabbit
-      rabbit.port: 5672
+      spring.rabbitmq.host: rabbit
+      spring.rabbitmq.port: 5672
       org.fd.search.api: http://fd-search:8081
       org.fd.store.api: http://fd-store:8082
       org.neo4j.path: /opt/flockdata
@@ -128,8 +138,7 @@ services:
       spring.cloud.discovery.enabled: 'true'
       org.fd.discovery.url: http://eureka:8761/eureka/
 
-      rabbit.host: rabbit
-      rabbit.port: 5672
+      spring.rabbitmq.host: rabbit
 
       org.fd.engine.url: 'http://fd-engine:8080'
       #Is the node going to be a client node which means it will hold no data
@@ -160,8 +169,7 @@ services:
       _JAVA_OPTIONS: "-Xmx1g"
       spring.profiles.active: fd-no-auth,discovery,riak
       server.port: 8082
-      rabbit.host: rabbit
-      rabbit.port: 5672
+      spring.rabbitmq.host: rabbit
       eureka.client.enabled: 'true'
       spring.cloud.discovery.enabled: 'true'
       org.fd.discovery.url: http://eureka:8761/eureka/
