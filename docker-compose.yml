@@ -11,21 +11,22 @@ services:
       - 8080
       - 5672
 
-  riak:
-    container_name: riak
-    image: lapax/riak:latest
+  kibana:
+    container_name: kibana
+    image: kibana:4.5
     ports:
-      - '8087:8087'
+      - 5601:5601
     environment:
-      storage_backend: leveldb
-      platform_data_dir: /data/riak
-    volumes:
-      - ./data/riak:/data/riak
+      ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
 
   elasticsearch:
     container_name: elasticsearch
-    image: elasticsearch:1.7.5
-    command: elasticsearch -Des.cluster.name=es_flockdata
+    image: elasticsearch:2.3
+    command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
     ports:
       - '9200:9200'
       - '9300:9300'
@@ -35,16 +36,6 @@ services:
       - 9200
       - 9300
 
-  kibana:
-    container_name: kibana
-    image: kibana:4.1
-    ports:
-      - 5601:5601
-    environment:
-      ELASTICSEARCH_URL: 'http://elasticsearch:9200'
-    depends_on:
-      - elasticsearch
-      - fd-search
 
   fd-client:
     container_name: fd-client
@@ -63,9 +54,11 @@ services:
     ports:
       - '8080:8080'
       - '7474:7474'
+      - '61000:61000'
     expose:
       - 8080
       - 7474
+      - 61000
 
     volumes:
       - fd-neo:/opt/flockdata/data
@@ -79,7 +72,8 @@ services:
       - rabbit
 
     environment:
-      _JAVA_OPTS: "-Xmx2g"
+#      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
+      _JAVA_OPTIONS: "-Xmx2g"
       server.port: 8080
       spring.profiles.active: fd-server,fd-auth-test,discovery
 
@@ -128,7 +122,7 @@ services:
     environment:
       server.port: 8081
       spring.profiles.active: fd-server,fd-no-auth,discovery
-      _JAVA_OPTS: "-Xmx2g"
+      _JAVA_OPTIONS: "-Xmx2g"
 
       eureka.client.enabled: 'true'
       spring.cloud.discovery.enabled: 'true'
@@ -163,7 +157,7 @@ services:
       - riak
 
     environment:
-      _JAVA_OPTS: "-Xmx1g"
+      _JAVA_OPTIONS: "-Xmx1g"
       spring.profiles.active: fd-no-auth,discovery,riak
       server.port: 8082
       rabbit.host: rabbit
@@ -214,8 +208,16 @@ services:
       - '4040:4040'
     privileged: true
 
-#MySQL
-#https://dzone.com/articles/docker-compose-environment-variable-binding-exampl
+  riak:
+    container_name: riak
+    image: lapax/riak:latest
+    ports:
+      - '8087:8087'
+    environment:
+      storage_backend: leveldb
+      platform_data_dir: /data/riak
+    volumes:
+      - ./data/riak:/data/riak
 
 networks:
   default:
