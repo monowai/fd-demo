@@ -59,7 +59,7 @@ services:
 
   fd-engine:
     container_name: fdemo-engine
-    image: flockdata/fd-engine:0.98.6
+    image: flockdata/fd-engine:0.98.7-SNAPSHOT
 
     ports:
       - '8091:8091'
@@ -107,7 +107,7 @@ services:
 
   fd-search:
     container_name: fdemo-search
-    image: flockdata/fd-search:0.98.6
+    image: flockdata/fd-search:0.98.7-SNAPSHOT
     ports:
      - '8092:8092'
     expose:
@@ -149,7 +149,7 @@ services:
 
   fd-store:
     container_name: fdemo-store
-    image: flockdata/fd-store:0.98.6
+    image: flockdata/fd-store:0.98.7-SNAPSHOT
     ports:
      - '8093:8093'
 
@@ -213,7 +213,7 @@ services:
 
   riak:
     container_name: fdemo-riak
-    image: lapax/riak:latest
+    image: basho/riak-kv:ubuntu-2.1.4
     ports:
       - '8087:8087'
     environment:
