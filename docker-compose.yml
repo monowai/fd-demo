@@ -1,8 +1,7 @@
-version: '2'
+version: '3'
 services:
 
   rabbit:
-    container_name: fdemo-rabbit
     image: rabbitmq:3-management
     ports:
       - '5672:5672'
@@ -10,31 +9,30 @@ services:
     expose:
       - 15682
       - 5672
+    networks:
+      - fd-demo
+
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
 
   kibana:
-    container_name: fdemo-kibana
     image: kibana:4.6
     ports:
       - 5601:5601
+    networks:
+      - fd-demo
+
     environment:
       ELASTICSEARCH_URL: 'http://elasticsearch:9200'
     depends_on:
       - elasticsearch
-    links:
-      - elasticsearch
 
-#  grafana:
-#    container_name: grafana
-#    image: grafana/grafana
-#    ports:
-#       - 3000:3000
-#    depends_on:
-#      - elasticsearch
-#    links:
-#      - elasticsearch
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
 
   elasticsearch:
-    container_name: fdemo-elasticsearch
     image: elasticsearch:2.4
     command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
     ports:
@@ -45,9 +43,15 @@ services:
     expose:
       - 9200
       - 9300
+    networks:
+      - fd-demo
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+
   fd-client:
     container_name: fdemo-client
-    image: flockdata/fd-client
+    image: flockdata/fd-client:0.98.8-SNAPSHOT
     # docker-compose run fd-client fdregister -u=demo:123 -l=demo
     # docker-compose run fd-client fdcountries -u=demo:123
     environment:
@@ -57,9 +61,11 @@ services:
       org.fd.client.http.pass: 123
       spring.rabbitmq.host: rabbit
 
+    networks:
+      - fd-demo
+
   fd-engine:
-    container_name: fdemo-engine
-    image: flockdata/fd-engine:0.98.7-SNAPSHOT
+    image: flockdata/fd-engine:0.98.8-SNAPSHOT
 
     ports:
       - '8091:8091'
@@ -73,6 +79,9 @@ services:
     volumes:
       - fd-neo:/opt/flockdata/data
 
+    networks:
+      - fd-demo
+
     ulimits:
       nofile:
         soft: 40000
@@ -80,6 +89,10 @@ services:
 
     depends_on:
       - rabbit
+
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
 
     environment:
 #      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
@@ -99,33 +112,34 @@ services:
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
       org.fd.engine.fortress.store: 'true'
-      cors.allowOrigin:  http://docker-ip,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
+      cors.allowOrigin:  http://192.168.99.103,http://docker-ip,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
 
     links:
       - rabbit
       - eureka
 
   fd-search:
-    container_name: fdemo-search
-    image: flockdata/fd-search:0.98.7-SNAPSHOT
+    image: flockdata/fd-search:0.98.8-SNAPSHOT
     ports:
      - '8092:8092'
     expose:
       - 8092
+    networks:
+      - fd-demo
 
     depends_on:
       - elasticsearch
       - rabbit
       - eureka
 
-    links:
-      - rabbit
-      - elasticsearch
-
     ulimits:
       nofile:
         soft: 40000
         hard: 40000
+
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
 
     environment:
       server.port: 8092
@@ -148,18 +162,23 @@ services:
       es.path.data: /opt/flockdata/data
 
   fd-store:
-    container_name: fdemo-store
-    image: flockdata/fd-store:0.98.7-SNAPSHOT
+    image: flockdata/fd-store:0.98.8-SNAPSHOT
     ports:
      - '8093:8093'
 
     expose:
       - 8093
+    networks:
+      - fd-demo
 
     depends_on:
       - rabbit
       - eureka
       - riak
+
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
 
     environment:
       _JAVA_OPTIONS: "-Xmx1g"
@@ -177,25 +196,66 @@ services:
       ports:
         - '80:80'
 
+      networks:
+        - fd-demo
+
       environment:
         ENGINE_URL: 'http://fd-engine:8091'
 
+      deploy:
+        placement:
+          constraints: [engine.labels.public==yes]
+
 # Monitoring tools
   eureka:
-    container_name: fdemo-discovery
     image: flockdata/fd-discovery:0.98.2
     ports:
       - '8761:8761'
     expose:
       - 8761
+    networks:
+      - fd-demo
+
     environment:
       eureka.server.enable-self-preservation: 'true'
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
 
-  #config:
-  #  container_name: fd-config
-  #  image: flockdata/fd-config:latest
-  #  ports:
-  #    - '8888:8888'
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    networks:
+      - fd-demo
+    ports:
+      - "9090:8080"
+    expose:
+      - 9090
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+  riak:
+    image: lapax/riak:latest
+    ports:
+      - '8087:8087'
+      - '8098:8098'
+    expose:
+      - 8098
+    environment:
+      storage_backend: leveldb
+      platform_data_dir: /data/riak
+
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+    volumes:
+      - riak:/data/riak
+    networks:
+      - fd-demo
 
   scope:
     image: weaveworks/scope
@@ -211,33 +271,19 @@ services:
       - '4040:4040'
     privileged: true
 
-  riak:
-    container_name: fdemo-riak
-    image: basho/riak-kv:ubuntu-2.1.4
-    ports:
-      - '8087:8087'
-    environment:
-      storage_backend: leveldb
-      platform_data_dir: /data/riak
-    volumes:
-      - ./data/riak:/data/riak
-
 networks:
-  default:
-    # Use the overlay driver for multi-host communication
-    driver: bridge
+  fd-demo:
 
-## You need to create your volumes. Something along the lines of:
+## Create volumes. TO create them with non-default options, do so manually
 ## docker volume create --name fd-neo
 volumes:
-  fd-es:
-    external: true
+  fd-es: {}
 
-  fd-neo:
-    external: true
+  fd-neo: {}
 
-  fd-riak:
-    external: true
+  fd-riak: {}
+
+  riak: {}
 
 # Cleaning up unused docker stuff
 #    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
