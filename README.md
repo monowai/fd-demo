@@ -19,47 +19,56 @@ Hereon please replace references to `docker-ip` with your machines docker IP, or
 
 `cd fd-demo`
 
-## Step 2 Create volumes
-Each FlockData service writes data to a named volume that we will now establish - stateful data resides here. Data volumes may be removed if you run docker cleanup scripts but will otherwise persist between restarts of the docker-machine
-
-`docker volume create --name=fd-neo`
-
-`docker volume create --name=fd-es`
-
-`docker volume create --name=fd-riak`
-
-Creation of volumes is a one-off process
-
-## Step 3 Start the services
+## Step 2 Start the services
 `docker-compose up -d` This will take time to pull images from the docker hub - be patient!
 
 Congratulations - you've now installed started ElasticSearch, Neo4j, Riak, RabbitMQ, FdEngine, FdSearch, FdStore, FdDiscovery and a bunch of other useful apps 
 
 # Testing the install
-This stack runs in the docker-machine. If you're not running on native linux, then you will need to replace `docker-ip` with your docker-machine IP address. You might want to create a `hosts` file entry.
+Start the FD interactive shell
 
-Check your credentials with the `demo` account. User demo:123 is the default configured account as set in docker-compose.yml
-`curl -u demo:123 http://docker-ip:8091/api/account`
+`docker-compose run fd-client`
 
-Check that inter-service connectivity is established. 
-`docker-compose run fd-client fdhealth`
+The fd-shell is a command line wrapper around the REST api exposed by FlockData. You can use `curl` to run commands against the endpoints if you prefer
 
-OR
-
-`curl -u demo:123 http://docker-ip:8091/api/v1/admin/health`
-
-or 
+Sample commands:
 
 ```
-docker-compose run fd-client fdhealth
+fd>ping
+pong
 
+fd>env
+ClientConfiguration - org.fd.engine.api [http://fd-engine:8091], org.fd.client.http.user [demo], org.fd.client.batchsize [1]
+**** FlockData RabbitAMQP configuration deployed. rabbit.host set to [rabbit:5672], rabbit.user [guest]
+
+fd>health
 {
   "eureka.client.serviceUrl.defaultZone" : "http://eureka:8761/eureka/",
-  "fd-search" : "Ok on http://fd-search:8091",
-  "fd-store" : "Ok on http://fd-store:8092",
-  "fd.store.enabled" : "false",
-  "fd.store.engine" : "RIAK",
-  "fd.version" : "0.98.1a (v0.98.1a/454008f)",
+  "fd-search" : {
+    "health" : {
+      "org.fd.search.es.settings" : "fd-default-settings.json",
+      "elasticsearch" : {
+        "Status" : "ok",
+        "nodeName" : "Fasaud",
+        "dataNodes" : 1,
+        "nodes" : 1,
+        "clusterName" : "es_flockdata",
+        "health" : "YELLOW"
+      },
+      "es.nodes" : "172.19.0.3:9300",
+      "org.fd.search.es.mapping" : "./",
+      "fd.search.version" : "0.98.8-SNAPSHOT (geo-tools/1273d8e)"
+    },
+    "org.fd.search.api" : "http://fd-search:8092",
+    "status" : "ok"
+  },
+  "fd-store" : {
+    "org.fd.store.api" : "http://fd-store:8093",
+    "fd.store.engine" : "RIAK",
+    "fd.store.enabled" : "true",
+    "status" : "OK - Riak"
+  },
+  "fd.version" : "0.98.8-SNAPSHOT (geo-tools/1273d8e)",
   "rabbit.host" : "rabbit",
   "rabbit.port" : "5672",
   "rabbit.user" : "guest",
@@ -70,13 +79,7 @@ docker-compose run fd-client fdhealth
 ## Use the UI
 At this point you can login to [fd-view](http://docker-ip) use demo/123 for credentials. You will be asked to register your account as a data access user in order to write data to the service.
 
-## Say hello
-
-fd-engine (inter docker container communications)
-
-`docker-compose run fd-client fdping`
-
-or (client based access over exposed port)
+## Say hello 
 
 `curl -u demo:123 http://docker-ip:8091/info`
 
@@ -84,19 +87,13 @@ Search and store have unsecured endpoints. fd-engine talks to them
 
 fd-search
 
-`docker-compose run fd-client fdping -s="http://fd-search:8092"`
-
-or
-
 `curl http://docker-ip:8092/api/ping`
 
 fd-store
 
 `curl http://docker-ip:8093/api/ping`
-`docker-compose run fd-client fdping -s="http://fd-store:8093"`
 
 Riak
-
 `curl http://docker-ip:8093/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
 
 ## Packaged services

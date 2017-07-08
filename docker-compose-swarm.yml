@@ -1,0 +1,69 @@
+version: '3'
+services:
+
+  rabbit:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+  kibana:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+  elasticsearch:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+
+  fd-engine:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+
+  fd-search:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+
+
+  fd-store:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+
+  fd-view:
+      deploy:
+        placement:
+          constraints: [engine.labels.public==yes]
+
+# Monitoring tools
+  eureka:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    networks:
+      - fd-demo
+    ports:
+      - "9090:8080"
+    expose:
+      - 9090
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [engine.labels.public==yes]
+
+  riak:
+    deploy:
+      placement:
+        constraints: [engine.labels.public==no]
+
+networks:
+  fd-demo:

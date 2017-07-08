@@ -12,10 +12,6 @@ services:
     networks:
       - fd-demo
 
-    deploy:
-      placement:
-        constraints: [engine.labels.public==yes]
-
   kibana:
     image: kibana:4.6
     ports:
@@ -27,10 +23,6 @@ services:
       ELASTICSEARCH_URL: 'http://elasticsearch:9200'
     depends_on:
       - elasticsearch
-
-    deploy:
-      placement:
-        constraints: [engine.labels.public==yes]
 
   elasticsearch:
     image: elasticsearch:2.4
@@ -45,13 +37,10 @@ services:
       - 9300
     networks:
       - fd-demo
-    deploy:
-      placement:
-        constraints: [engine.labels.public==no]
 
   fd-client:
     container_name: fdemo-client
-    image: flockdata/fd-client:0.98.8-SNAPSHOT
+    image: flockdata/fd-client:0.98.8
     # docker-compose run fd-client fdregister -u=demo:123 -l=demo
     # docker-compose run fd-client fdcountries -u=demo:123
     environment:
@@ -65,7 +54,7 @@ services:
       - fd-demo
 
   fd-engine:
-    image: flockdata/fd-engine:0.98.8-SNAPSHOT
+    image: flockdata/fd-engine:0.98.8
 
     ports:
       - '8091:8091'
@@ -89,10 +78,6 @@ services:
 
     depends_on:
       - rabbit
-
-    deploy:
-      placement:
-        constraints: [engine.labels.public==yes]
 
     environment:
 #      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
@@ -119,7 +104,7 @@ services:
       - eureka
 
   fd-search:
-    image: flockdata/fd-search:0.98.8-SNAPSHOT
+    image: flockdata/fd-search:0.98.8
     ports:
      - '8092:8092'
     expose:
@@ -136,10 +121,6 @@ services:
       nofile:
         soft: 40000
         hard: 40000
-
-    deploy:
-      placement:
-        constraints: [engine.labels.public==no]
 
     environment:
       server.port: 8092
@@ -162,7 +143,7 @@ services:
       es.path.data: /opt/flockdata/data
 
   fd-store:
-    image: flockdata/fd-store:0.98.8-SNAPSHOT
+    image: flockdata/fd-store:0.98.8
     ports:
      - '8093:8093'
 
@@ -175,10 +156,6 @@ services:
       - rabbit
       - eureka
       - riak
-
-    deploy:
-      placement:
-        constraints: [engine.labels.public==no]
 
     environment:
       _JAVA_OPTIONS: "-Xmx1g"
@@ -202,13 +179,9 @@ services:
       environment:
         ENGINE_URL: 'http://fd-engine:8091'
 
-      deploy:
-        placement:
-          constraints: [engine.labels.public==yes]
-
 # Monitoring tools
   eureka:
-    image: flockdata/fd-discovery:0.98.2
+    image: flockdata/fd-discovery:0.98.3
     ports:
       - '8761:8761'
     expose:
@@ -218,25 +191,6 @@ services:
 
     environment:
       eureka.server.enable-self-preservation: 'true'
-    deploy:
-      placement:
-        constraints: [engine.labels.public==yes]
-
-
-  visualizer:
-    image: dockersamples/visualizer:stable
-    networks:
-      - fd-demo
-    ports:
-      - "9090:8080"
-    expose:
-      - 9090
-    stop_grace_period: 1m30s
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    deploy:
-      placement:
-        constraints: [engine.labels.public==yes]
 
   riak:
     image: lapax/riak:latest
@@ -249,9 +203,6 @@ services:
       storage_backend: leveldb
       platform_data_dir: /data/riak
 
-    deploy:
-      placement:
-        constraints: [engine.labels.public==no]
     volumes:
       - riak:/data/riak
     networks:
@@ -274,16 +225,3 @@ services:
 networks:
   fd-demo:
 
-## Create volumes. TO create them with non-default options, do so manually
-## docker volume create --name fd-neo
-volumes:
-  fd-es: {}
-
-  fd-neo: {}
-
-  fd-riak: {}
-
-  riak: {}
-
-# Cleaning up unused docker stuff
-#    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/

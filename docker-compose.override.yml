@@ -1,0 +1,15 @@
+version: '3'
+
+## Create volumes. TO create them with non-default options, do so manually
+## docker volume create --name fd-neo
+volumes:
+  fd-es: {}
+
+  fd-neo: {}
+
+  fd-riak: {}
+
+  riak: {}
+
+# Cleaning up unused docker stuff
+#    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
