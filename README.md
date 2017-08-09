@@ -74,6 +74,8 @@ fd>health
   "rabbit.user" : "guest",
   "spring.cloud.config.discovery.enabled" : "false"
 }
+
+$ import --data "data/fd-cow.txt, model/countries.json;data/states.csv, model/states.json"
 ```
 
 ## Use the UI

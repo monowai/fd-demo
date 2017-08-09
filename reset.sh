@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 docker stop  $(docker ps --format '{{.ID}}' )
-docker volume rm fd-riak
-docker volume rm fd-es
-docker volume rm fd-neo
+docker volume rm fddemo_fd-riak
+docker volume rm fddemo_fd-es
+docker volume rm fddemo_fd-neo
 
 
 #docker rm $(docker ps -a -q)

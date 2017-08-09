@@ -40,7 +40,7 @@ services:
 
   fd-client:
     container_name: fdemo-client
-    image: flockdata/fd-client:0.98.8
+    image: flockdata/fd-client:0.98.9
     # docker-compose run fd-client fdregister -u=demo:123 -l=demo
     # docker-compose run fd-client fdcountries -u=demo:123
     environment:
@@ -54,7 +54,7 @@ services:
       - fd-demo
 
   fd-engine:
-    image: flockdata/fd-engine:0.98.8
+    image: flockdata/fd-engine:0.98.9
 
     ports:
       - '8091:8091'
@@ -104,7 +104,7 @@ services:
       - eureka
 
   fd-search:
-    image: flockdata/fd-search:0.98.8
+    image: flockdata/fd-search:0.98.9
     ports:
      - '8092:8092'
     expose:
@@ -143,7 +143,7 @@ services:
       es.path.data: /opt/flockdata/data
 
   fd-store:
-    image: flockdata/fd-store:0.98.8
+    image: flockdata/fd-store:0.98.9
     ports:
      - '8093:8093'
 
