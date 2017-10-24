@@ -13,7 +13,7 @@ services:
       - fd-demo
 
   kibana:
-    image: kibana:4.6
+    image: kibana:5
     ports:
       - 5601:5601
     networks:
@@ -25,8 +25,8 @@ services:
       - elasticsearch
 
   elasticsearch:
-    image: elasticsearch:2.4
-    command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
+    image: elasticsearch:5.5
+    command: "elasticsearch -E cluster.name=flockdata -E node.master=true -E discovery.type=single-node -E network.host=0.0.0.0 -E http.host=0.0.0.0"
     ports:
       - '9200:9200'
       - '9300:9300'
@@ -84,12 +84,9 @@ services:
       _JAVA_OPTIONS: "-Xmx2g"
       server.port: 8091
       spring.profiles.active: fd-server,fd-auth-test,discovery
-
       org.fd.discovery.url: http://eureka:8761/eureka/
-
       org.fd.auth.simple.users.demo.pass: 123
       org.fd.auth.simple.users.demo.roles: FD_USER;FD_ADMIN
-
       spring.rabbitmq.host: rabbit
       spring.rabbitmq.port: 5672
       org.fd.search.api: http://fd-search:8092
