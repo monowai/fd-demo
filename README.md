@@ -4,13 +4,9 @@ Starts the [FlockData](http://FlockData.com) stack with Docker Compose
 ## Status
 Docker and docker-compose is the only current pre-packaged distribution. Pre-built artifacts are available in the [MVNRepostitory](https://mvnrepository.com/artifact/org.flockdata) for alternative deployment scenarios 
 
-You'll need to ensure you've installed [DockerToolbox](https://www.docker.com/products/docker-toolbox) before proceeding. Do not run this with the native docker osx/windows as underlying community libraries are still being upgraded to address the new architecture.
+You'll need to ensure you have a recent version of Docker installed 17.12+
 
-Check that your docker-machine is up and running
-
-`docker-machine ip`
-
-Hereon please replace references to `docker-ip` with your machines docker IP, or create an alias in your hosts file for convenience. 
+We are assuming you are not using docker-toolbox but rather Docker for Windows/Mac etc
 
 # Installation
 
@@ -19,47 +15,42 @@ Hereon please replace references to `docker-ip` with your machines docker IP, or
 
 `cd fd-demo`
 
-## Step 2 Create volumes
-Each FlockData service writes data to a named volume that we will now establish - stateful data resides here. Data volumes may be removed if you run docker cleanup scripts but will otherwise persist between restarts of the docker-machine
-
-`docker volume create --name=fd-neo`
-
-`docker volume create --name=fd-es`
-
-`docker volume create --name=fd-riak`
-
-Creation of volumes is a one-off process
-
-## Step 3 Start the services
-`docker-compose up -d` This will take time to pull images from the docker hub - be patient!
+## Step 2 Start the services
+`docker-compose up -d` This will take time to pull images from the docker hub
 
 Congratulations - you've now installed started ElasticSearch, Neo4j, Riak, RabbitMQ, FdEngine, FdSearch, FdStore, FdDiscovery and a bunch of other useful apps 
 
 # Testing the install
-This stack runs in the docker-machine. If you're not running on native linux, then you will need to replace `docker-ip` with your docker-machine IP address. You might want to create a `hosts` file entry.
+This stack runs in the fddemo_default network.
+
+fd-shell is the most useful way to verify connectivity which encapsulates most calls to the REST api for convenience
+
+```$bash
+docker-compose run fd-shell -it
+// Verify connectivity
+fd-shell$ ping
+pong
+```
 
 Check your credentials with the `demo` account. User demo:123 is the default configured account as set in docker-compose.yml
-`curl -u demo:123 http://docker-ip:8091/api/account`
+`fd-shell$ login --user demo --pass 123`
 
-Check that inter-service connectivity is established. 
-`docker-compose run fd-client fdhealth`
-
-OR
-
-`curl -u demo:123 http://docker-ip:8091/api/v1/admin/health`
-
-or 
-
+Check that inter-service connectivity is established.
 ```
-docker-compose run fd-client fdhealth
-
+health
 {
   "eureka.client.serviceUrl.defaultZone" : "http://eureka:8761/eureka/",
-  "fd-search" : "Ok on http://fd-search:8091",
-  "fd-store" : "Ok on http://fd-store:8092",
-  "fd.store.enabled" : "false",
-  "fd.store.engine" : "RIAK",
-  "fd.version" : "0.98.1a (v0.98.1a/454008f)",
+  "fd-search" : {
+    "org.fd.search.api" : "http://fd-search:15002",
+    "status" : "!Unreachable fd-search"
+  },
+  "fd-store" : {
+    "org.fd.store.api" : "http://fd-store:15003",
+    "fd.store.engine" : "RIAK",
+    "fd.store.enabled" : "true",
+    "status" : "OK - Riak"
+  },
+  "fd.version" : "0.98.9-SNAPSHOT (master/4af8049)",
   "rabbit.host" : "rabbit",
   "rabbit.port" : "5672",
   "rabbit.user" : "guest",
@@ -68,47 +59,33 @@ docker-compose run fd-client fdhealth
 ```
 
 ## Use the UI
-At this point you can login to [fd-view](http://docker-ip) use demo/123 for credentials. You will be asked to register your account as a data access user in order to write data to the service.
-
-## Say hello
-
-fd-engine (inter docker container communications)
-
-`docker-compose run fd-client fdping`
-
-or (client based access over exposed port)
-
-`curl -u demo:123 http://docker-ip:8091/info`
+At this point you can login to [fd-view](http://localhost:15000) use demo/123 for credentials. You will be asked to register your account as a data access user in order to write data to the service.
 
 Search and store have unsecured endpoints. fd-engine talks to them
 
 fd-search
 
-`docker-compose run fd-client fdping -s="http://fd-search:8092"`
-
-or
-
-`curl http://docker-ip:8092/api/ping`
+`curl http://localhost:15002/api/ping`
 
 fd-store
 
-`curl http://docker-ip:8093/api/ping`
-`docker-compose run fd-client fdping -s="http://fd-store:8093"`
+`curl http://localhost:15001/api/ping`
+`docker-compose run fd-client fdping -s="http://fd-store:15003"`
 
 Riak
 
-`curl http://docker-ip:8093/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
+`curl http://localhost:15003/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
 
 ## Packaged services
 |Service   |Description   |Address   |
 |---|---|---|
-|[fd-view](https://github.com/monowai/fd-view) |FlockData's integrated browser and analysis tool   |[http://docker-ip](http://docker-ip)|
-|[weavescope](https://www.weave.works/products/weave-scope/)|visual overview of the stack   |[http://docker-ip:4040](http://docker-ip:4040)|
-|RabbitMQ |messaging admin|[http://docker-ip:15672](http://docker-ip:15672)|
-|[ElasticSearch](https://www.elastic.co)|Rest based search API |[http://docker-ip:9200](http://docker-ip:9200)|
-[neo4j-browser](http://neo4j.org)|HTML graph browser and REST access to Neo4j|[http://docker-ip:7474](http://docker-ip:7474)|
-[Kibana](https://www.elastic.co/products/kibana)|ElasticSearch data viz|[http://docker-ip:5601](http://docker-ip:5601)|
-|Spring/Netflix Eureaka|Monitoring|[http://docker-ip:8761](http://docker-ip:8761)|
+|[fd-view](https://github.com/monowai/fd-view) |FlockData's integrated browser and analysis tool   |[http://localhost](http://localhost)|
+|[weavescope](https://www.weave.works/products/weave-scope/)|visual overview of the stack   |[http://localhost:4040](http://localhost:4040)|
+|RabbitMQ |messaging admin|[http://localhost:15672](http://localhost:15672)|
+|[ElasticSearch](https://www.elastic.co)|Rest based search API |[http://localhost:9200](http://localhost:9200)|
+[neo4j-browser](http://neo4j.org)|HTML graph browser and REST access to Neo4j|[http://localhost:7474](http://localhost:7474)|
+[Kibana](https://www.elastic.co/products/kibana)|ElasticSearch data viz|[http://localhost:5601](http://localhost:5601)|
+|Spring/Netflix Eureaka|Monitoring|[http://localhost:8761](http://localhost:8761)|
 |[PostMan](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)|Documentation for the REST API|[Postman](https://github.com/monowai/flockdata.org/blob/master/fd.api-postman.json)|
 
 ## Security
@@ -141,7 +118,7 @@ With the data access account established, you can load some static data into the
 
 `docker-compose run fd-client fdcountries -u=demo:123`
 
-You can now navigate to the [Neo4j browser](http://docker-ip:7474) and after logging in with default password of `neo4j` you can run the following Cypher
+You can now navigate to the [Neo4j browser](http://localhost:7474) and after logging in with default password of `neo4j` you can run the following Cypher
 
 `match (c:Country) return c` 
 

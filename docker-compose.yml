@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 services:
 
   rabbit:
@@ -13,11 +13,12 @@ services:
 
   kibana:
     container_name: fdemo-kibana
-    image: kibana:4.6
+    image: docker.elastic.co/kibana/kibana:5.5.3
     ports:
       - 5601:5601
     environment:
       ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+      XPACK_MONITORING_UI_CONTAINER_ELASTICSEARCH_ENABLED: "false"
     depends_on:
       - elasticsearch
     links:
@@ -35,8 +36,8 @@ services:
 
   elasticsearch:
     container_name: fdemo-elasticsearch
-    image: elasticsearch:2.4
-    command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host"
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
+    command: "elasticsearch -Des.cluster.name=es_flockdata -Des.node.master=true --network.host=0.0.0.0 --net=host -E xpack.security.enabled=false"
     ports:
       - '9200:9200'
       - '9300:9300'
@@ -45,13 +46,15 @@ services:
     expose:
       - 9200
       - 9300
-  fd-client:
-    container_name: fdemo-client
-    image: flockdata/fd-client
+
+  fd-shell:
+    container_name: fdemo-shell
+    image: flockdata/fd-shell
+#     docker-compose run fd-shell -it
     # docker-compose run fd-client fdregister -u=demo:123 -l=demo
     # docker-compose run fd-client fdcountries -u=demo:123
     environment:
-      org.fd.engine.api: 'http://fd-engine:8091'
+      org.fd.engine.api: 'http://fd-engine:15001'
       org.fd.client.batchsize: 1
       org.fd.client.http.user: demo
       org.fd.client.http.pass: 123
@@ -59,14 +62,14 @@ services:
 
   fd-engine:
     container_name: fdemo-engine
-    image: flockdata/fd-engine:0.98.6
+    image: flockdata/fd-engine:0.98.9-SNAPSHOT
 
     ports:
-      - '8091:8091'
+      - '15001:15001'
       - '7474:7474'
       - '61000:61000'
     expose:
-      - 8091
+      - 15001
       - 7474
       - 61000
 
@@ -84,7 +87,7 @@ services:
     environment:
 #      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
       _JAVA_OPTIONS: "-Xmx2g"
-      server.port: 8091
+      server.port: 15001
       spring.profiles.active: fd-server,fd-auth-test,discovery
 
       org.fd.discovery.url: http://eureka:8761/eureka/
@@ -94,8 +97,8 @@ services:
 
       spring.rabbitmq.host: rabbit
       spring.rabbitmq.port: 5672
-      org.fd.search.api: http://fd-search:8092
-      org.fd.store.api: http://fd-store:8093
+      org.fd.search.api: http://fd-search:15002
+      org.fd.store.api: http://fd-store:15003
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
       org.fd.engine.fortress.store: 'true'
@@ -107,11 +110,11 @@ services:
 
   fd-search:
     container_name: fdemo-search
-    image: flockdata/fd-search:0.98.6
+    image: flockdata/fd-search:0.98.9-SNAPSHOT
     ports:
-     - '8092:8092'
+     - '15002:15002'
     expose:
-      - 8092
+      - 15002
 
     depends_on:
       - elasticsearch
@@ -128,7 +131,7 @@ services:
         hard: 40000
 
     environment:
-      server.port: 8092
+      server.port: 15002
       spring.profiles.active: fd-server,fd-no-auth,discovery
       _JAVA_OPTIONS: "-Xmx2g"
 
@@ -149,12 +152,12 @@ services:
 
   fd-store:
     container_name: fdemo-store
-    image: flockdata/fd-store:0.98.6
+    image: flockdata/fd-store:0.98.9-SNAPSHOT
     ports:
-     - '8093:8093'
+     - '15003:15003'
 
     expose:
-      - 8093
+      - 15003
 
     depends_on:
       - rabbit
@@ -164,21 +167,21 @@ services:
     environment:
       _JAVA_OPTIONS: "-Xmx1g"
       spring.profiles.active: fd-server,fd-no-auth,discovery,riak
-      server.port: 8093
+      server.port: 15003
       spring.rabbitmq.host: rabbit
 
       org.fd.discovery.url: http://eureka:8761/eureka/
       riak.hosts: riak
       es.clustername: 'es_flockdata'
 
-  fd-view:
-      container_name: fdemo-view
-      image: flockdata/fd-view
-      ports:
-        - '80:80'
-
-      environment:
-        ENGINE_URL: 'http://fd-engine:8091'
+#  fd-view:
+#      container_name: fdemo-view
+#      image: flockdata/fd-view
+#      ports:
+#        - '15000:15000'
+#
+#      environment:
+#        ENGINE_URL: 'http://fd-engine:15001'
 
 # Monitoring tools
   eureka:
@@ -197,19 +200,19 @@ services:
   #  ports:
   #    - '8888:8888'
 
-  scope:
-    image: weaveworks/scope
-    container_name: fdemo-weavescope
-    volumes:
-      - '/var/run/:/var/run:rw'
-    command:
-      - '--probe.docker'
-      - 'true'
-    network_mode: 'host'
-    pid: 'host'
-    ports:
-      - '4040:4040'
-    privileged: true
+#  scope:
+#    image: weaveworks/scope
+#    container_name: fdemo-weavescope
+#    volumes:
+#      - '/var/run/:/var/run:rw'
+#    command:
+#      - '--probe.docker'
+#      - 'true'
+#    network_mode: 'host'
+#    pid: 'host'
+#    ports:
+#      - '4040:4040'
+#    privileged: true
 
   riak:
     container_name: fdemo-riak
@@ -230,14 +233,11 @@ networks:
 ## You need to create your volumes. Something along the lines of:
 ## docker volume create --name fd-neo
 volumes:
-  fd-es:
-    external: true
+  fd-es: {}
 
-  fd-neo:
-    external: true
+  fd-neo: {}
 
-  fd-riak:
-    external: true
+  fd-riak: {}
 
 # Cleaning up unused docker stuff
 #    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/
