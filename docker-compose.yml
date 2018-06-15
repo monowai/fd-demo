@@ -88,7 +88,7 @@ services:
 #      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
       _JAVA_OPTIONS: "-Xmx2g"
       server.port: 15001
-      spring.profiles.active: fd-server,fd-auth-test,discovery
+      spring.profiles.active: fd-server,fd-auth-test
 
       org.fd.discovery.url: http://eureka:8761/eureka/
 
@@ -184,15 +184,15 @@ services:
 #        ENGINE_URL: 'http://fd-engine:15001'
 
 # Monitoring tools
-  eureka:
-    container_name: fdemo-discovery
-    image: flockdata/fd-discovery:0.98.2
-    ports:
-      - '8761:8761'
-    expose:
-      - 8761
-    environment:
-      eureka.server.enable-self-preservation: 'true'
+#  eureka:
+#    container_name: fdemo-discovery
+#    image: flockdata/fd-discovery:0.98.2
+#    ports:
+#      - '8761:8761'
+#    expose:
+#      - 8761
+#    environment:
+#      eureka.server.enable-self-preservation: 'true'
 
   #config:
   #  container_name: fd-config
