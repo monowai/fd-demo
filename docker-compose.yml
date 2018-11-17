@@ -132,7 +132,7 @@ services:
 
     environment:
       server.port: 15002
-      spring.profiles.active: fd-server,fd-no-auth,discovery
+      spring.profiles.active: fd-server,discovery
       _JAVA_OPTIONS: "-Xmx2g"
 
       org.fd.discovery.url: http://eureka:8761/eureka/
@@ -166,7 +166,7 @@ services:
 
     environment:
       _JAVA_OPTIONS: "-Xmx1g"
-      spring.profiles.active: fd-server,fd-no-auth,discovery,riak
+      spring.profiles.active: fd-server,discovery,riak
       server.port: 15003
       spring.rabbitmq.host: rabbit
 
