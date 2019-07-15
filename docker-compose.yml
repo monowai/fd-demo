@@ -40,19 +40,6 @@ services:
       - network.host=_global_
       - net=host
 
-  fd-shell:
-    container_name: fdemo-shell
-    image: flockdata/fd-shell
-#     docker-compose run fd-shell -it
-    # docker-compose run fd-client fdregister -u=demo:123 -l=demo
-    # docker-compose run fd-client fdcountries -u=demo:123
-    environment:
-      org.fd.engine.api: 'http://fd-engine:15001'
-      org.fd.client.batchsize: 1
-      org.fd.client.http.user: demo
-      org.fd.client.http.pass: 123
-      spring.rabbitmq.host: rabbit
-
   fd-engine:
     container_name: fdemo-engine
     image: flockdata/fd-engine:0.98.10-SNAPSHOT
@@ -94,12 +81,11 @@ services:
       org.fd.store.api: http://fd-store:15003
       org.neo4j.path: /opt/flockdata
       org.neo4j.server.database.location: /opt/flockdata/data
-      org.fd.engine.fortress.store: 'true'
-      cors.allowOrigin:  http://docker-ip,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
+      org.fd.engine.fortress.store: 'false'
+      cors.allowOrigin:  http://0.0.0.0:9000,http://localhost:9000,http://127.0.0.1:9000,http://192.168.99.100,chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop
 
     links:
       - rabbit
-  #      - eureka
 
   fd-search:
     container_name: fdemo-search
@@ -112,7 +98,6 @@ services:
     depends_on:
       - elasticsearch
       - rabbit
-    #      - eureka
 
     links:
       - rabbit
@@ -143,50 +128,55 @@ services:
       es.path.home: /opt/flockdata
       es.path.data: /opt/flockdata/data
 
-  fd-store:
-    container_name: fdemo-store
-    image: flockdata/fd-store:0.98.10-SNAPSHOT
+  fd-view:
+    container_name: fdemo-view
+    image: flockdata/fd-view
     ports:
-     - '15003:15003'
-
-    expose:
-      - 15003
-
+      - target: 80
+        published: 9000
+        protocol: tcp
+        mode: host
+    environment:
+      ENGINE_URL: 'http://localhost:9000/fde'
+    links:
+      - fd-engine
     depends_on:
-      - rabbit
-      #      - eureka
-      - riak
+      - fd-engine
 
-    environment:
-      _JAVA_OPTIONS: "-Xmx1g"
-      spring.profiles.active: fd-server,discovery,riak
-      server.port: 15003
-      spring.rabbitmq.host: rabbit
+  #  fd-store:
+  #    container_name: fdemo-store
+  #    image: flockdata/fd-store:0.98.10-SNAPSHOT
+  #    ports:
+  #     - '15003:15003'
+  #
+  #    expose:
+  #      - 15003
+  #
+  #    depends_on:
+  #      - rabbit
+  #      #      - eureka
+  #      - riak
+  #
+  #    environment:
+  #      _JAVA_OPTIONS: "-Xmx1g"
+  #      spring.profiles.active: fd-server,discovery,riak
+  #      server.port: 15003
+  #      spring.rabbitmq.host: rabbit
+  #
+  #      org.fd.discovery.url: http://eureka:8761/eureka/
+  #      riak.hosts: riak
+  #      es.clustername: 'es_flockdata'
 
-      org.fd.discovery.url: http://eureka:8761/eureka/
-      riak.hosts: riak
-      es.clustername: 'es_flockdata'
-
-  riak:
-    container_name: fdemo-riak
-    image: lapax/riak:latest
-    ports:
-      - '8087:8087'
-    environment:
-      storage_backend: leveldb
-      platform_data_dir: /data/riak
-    volumes:
-      - ./data/riak:/data/riak
-
-  #  fd-view:
-#      container_name: fdemo-view
-#      image: flockdata/fd-view
-#      ports:
-#        - '15000:15000'
-#
-#      environment:
-#        ENGINE_URL: 'http://fd-engine:15001'
-
+  #  riak:
+  #    container_name: fdemo-riak
+  #    image: lapax/riak:latest
+  #    ports:
+  #      - '8087:8087'
+  #    environment:
+  #      storage_backend: leveldb
+  #      platform_data_dir: /data/riak
+  #    volumes:
+  #      - ./data/riak:/data/riak
 # Monitoring tools
 #  eureka:
 #    container_name: fdemo-discovery
@@ -243,5 +233,3 @@ volumes:
 
   fd-riak: {}
 
-# Cleaning up unused docker stuff
-#    http://blog.yohanliyanage.com/2015/05/docker-clean-up-after-yourself/

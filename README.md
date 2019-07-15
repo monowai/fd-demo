@@ -21,12 +21,12 @@ We are assuming you are not using docker-toolbox but rather Docker for Windows/M
 Congratulations - you've now installed started ElasticSearch, Neo4j, Riak, RabbitMQ, FdEngine, FdSearch, FdStore, FdDiscovery and a bunch of other useful apps 
 
 # Testing the install
-This stack runs in the fddemo_default network.
+This stack runs in the fd-demo_default network.
 
 fd-shell is the most useful way to verify connectivity which encapsulates most calls to the REST api for convenience
 
 ```$bash
-docker-compose run fd-shell -it
+docker run -it -e spring.rabbit.host=rabbit -e org.fd.engine.api=http://fd-engine:15001 --network=fd-demo_default flockdata/fd-shell
 // Verify connectivity
 fd-shell$ ping
 pong
@@ -67,15 +67,6 @@ fd-search
 
 `curl http://localhost:15002/api/ping`
 
-fd-store
-
-`curl http://localhost:15001/api/ping`
-`docker-compose run fd-client fdping -s="http://fd-store:15003"`
-
-Riak
-
-`curl http://localhost:15003/api/v1/admin/ping/riak` (Verify fd-store connectivity to Riak)
-
 ## Packaged services
 |Service   |Description   |Address   |
 |---|---|---|
@@ -112,11 +103,15 @@ This example logs in as an FD_ADMIN account - `demo` - and creates a SystemUser 
 
 Using the pre-configured fd-client container in the docker-compose stack
 
-`docker-compose run fd-client fdregister -u=demo:123 -l=demo -c=flockdata`
+```
+fdregister -u=demo:123 -l=demo -c=flockdata
+```
 
 With the data access account established, you can load some static data into the service. FlockData comes with a data set of countries and capitals. Load this data via the following command    
 
-`docker-compose run fd-client fdcountries -u=demo:123`
+```
+ingest --data "./data/fd-cow.txt,./model/countries.json;./data/states.csv,./model/states.json"
+```
 
 You can now navigate to the [Neo4j browser](http://localhost:7474) and after logging in with default password of `neo4j` you can run the following Cypher
 
