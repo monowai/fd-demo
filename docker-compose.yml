@@ -42,7 +42,7 @@ services:
 
   fd-engine:
     container_name: fdemo-engine
-    image: flockdata/fd-engine:0.98.10-SNAPSHOT
+    image: flockdata/fd-engine:latest
 
     ports:
       - '15001:15001'
@@ -65,8 +65,8 @@ services:
       - rabbit
 
     environment:
-#      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
-      _JAVA_OPTIONS: "-Xmx2g"
+      _JAVA_OPTIONS: "-Xmx2g -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=61000"
+#      _JAVA_OPTIONS: "-Xmx2g"
       server.port: 15001
       spring.profiles.active: fd-server,fd-auth-test
 
@@ -89,7 +89,7 @@ services:
 
   fd-search:
     container_name: fdemo-search
-    image: flockdata/fd-search:0.98.10-SNAPSHOT
+    image: flockdata/fd-search:latest
     ports:
      - '15002:15002'
     expose:
@@ -117,12 +117,12 @@ services:
 
       spring.rabbitmq.host: rabbit
 
-      org.fd.engine.url: 'http://fd-engine:8091'
+      org.fd.engine.url: 'http://fd-engine:15001'
       #Is the node going to be a client node which means it will hold no data
       org.fd.search.es.transportOnly: "true"
       # A local node is a node that uses a local (JVM level) discovery and transport
       org.fd.search.es.local: "false"
-      # , serparated list of hosts to connect to if transportOnly == true
+      # , separated list of hosts to connect to if transportOnly == true
       es.nodes: elasticsearch:9300
       es.clustername: 'es_flockdata'
       es.path.home: /opt/flockdata
@@ -145,7 +145,7 @@ services:
 
   #  fd-store:
   #    container_name: fdemo-store
-  #    image: flockdata/fd-store:0.98.10-SNAPSHOT
+  #    image: flockdata/fd-store:latest
   #    ports:
   #     - '15003:15003'
   #

@@ -25,19 +25,29 @@ This stack runs in the fd-demo_default network.
 
 fd-shell is the most useful way to verify connectivity which encapsulates most calls to the REST api for convenience
 
+Default login account is demo password is 123 this is configured in docker-compose.yml
+
 ```$bash
-docker run -it -e spring.rabbit.host=rabbit -e org.fd.engine.api=http://fd-engine:15001 --network=fd-demo_default flockdata/fd-shell
-// Verify connectivity
+# Start the shell
+docker run --name fddemo-fdshell -it -e spring.rabbitmq.host=rabbit -e org.fd.engine.api=http://fd-engine:15001 --network=fd-demo_default flockdata/fd-shell
+# Verify connectivity
 fd-shell$ ping
 pong
-```
+fd-shell$ login demo
+password: ***
+{
+  "login" : "demo",
+  "name" : "demo",
+  "companyName" : "flockdata",
+  "apiKey" : <somekey>,
+  "email" : null,
+  "status" : "ENABLED",
+  "userRoles" : [ "ROLE_FD_ADMIN", "ROLE_FD_USER", "ROLE_USER" ],
+  "active" : true
+}
+# Check that inter-service connectivity is established.
 
-Check your credentials with the `demo` account. User demo:123 is the default configured account as set in docker-compose.yml
-`fd-shell$ login --user demo --pass 123`
-
-Check that inter-service connectivity is established.
-```
-health
+fd-shell$ health
 {
   "eureka.client.serviceUrl.defaultZone" : "http://eureka:8761/eureka/",
   "fd-search" : {
@@ -58,14 +68,8 @@ health
 }
 ```
 
-## Use the UI
-At this point you can login to [fd-view](http://localhost:15000) use demo/123 for credentials. You will be asked to register your account as a data access user in order to write data to the service.
-
-Search and store have unsecured endpoints. fd-engine talks to them
-
-fd-search
-
-`curl http://localhost:15002/api/ping`
+## FD-VIEW
+You can login to [fd-view](http://localhost:9000) using the above  credentials.
 
 ## Packaged services
 |Service   |Description   |Address   |
@@ -79,32 +83,11 @@ fd-search
 |Spring/Netflix Eureaka|Monitoring|[http://localhost:8761](http://localhost:8761)|
 |[PostMan](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)|Documentation for the REST API|[Postman](https://github.com/monowai/flockdata.org/blob/master/fd.api-postman.json)|
 
-## Security
 
-FlockData uses configurable [security mechanisms](https://github.com/monowai/flockdata.org/tree/master/fd-security) backed by the Spring Security framework. We love [StormPath](http://stormpath.com); you might too.
-This stack uses simple security credentials that are managed in the `docker-compose.yml` file. Namely a single set of credentials - `demo` / `123`
-
-FlockData currently has two access roles:
-
-|Role|Purpose|
-|---|---|
-|FD_ADMIN|Allows performing administrative functions and creating data access users|
-|FD_USER|Allows user accounts access to the service. Should be registered to connect to a SystemUser account that authorises reading and writing of data|
-
-Authorised users are accounts that exist in your security domain. Authorised users need to have a FlockData SystemUser identity established. 
-
-Security roles are defined in your authorisation sub-system - LDAP/AD/StormPath etc. They are not stored in FlockData (except in the case of using the simpleauth security mechanism).    
-
-SystemUser identify
-    Authenticated accounts need to be connected to a system user account to read and write data. This is done via the RegistrationEP or using the flockdata/fd-client docker image
-
-## Registering a SystemUser account
-This example logs in as an FD_ADMIN account - `demo` - and creates a SystemUser identify for the login identifier `demo` i.e. it connects the auth account to a SystemUser data access account. You can do this in one of the two following ways:
-
-Using the pre-configured fd-client container in the docker-compose stack
-
+## Loading country data
+With your demo account registered as a data access user, you can register
 ```
-fdregister -u=demo:123 -l=demo -c=flockdata
+register --account demo --email demo@flockdata.com --company flockdata
 ```
 
 With the data access account established, you can load some static data into the service. FlockData comes with a data set of countries and capitals. Load this data via the following command    
