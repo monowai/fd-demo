@@ -137,7 +137,7 @@ services:
         protocol: tcp
         mode: host
     environment:
-      ENGINE_URL: 'http://localhost:9000/fde'
+      ENGINE_URL: 'http://localhost:9000/api'
     links:
       - fd-engine
     depends_on:
